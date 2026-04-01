@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>ChatNet</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+
+  <div class="conn-bar" id="connBar"></div>
+
+  <!-- ══ LEFT PANEL ══════════════════════════════════════════ -->
+  <div class="left-panel">
+    <div class="lp-header">
+      <div class="avatar" id="myAvatar" style="background:var(--green)">?</div>
+      <span class="uname" id="myUsername">ChatNet</span>
+      <div style="display:flex;gap:2px;margin-left:auto">
+        <button class="icon-btn" onclick="openGroupModal()">👥</button>
+        <button class="icon-btn" onclick="openSearch()">🔍</button>
+        <button class="icon-btn" onclick="openMenu()">⋮</button>
+      </div>
+    </div>
+    <div class="search-wrap">
+      <div class="search-inner">
+        <span class="si">🔍</span>
+        <input id="searchChats" placeholder="Search chats" oninput="renderChatList()">
+      </div>
+    </div>
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="setTab('All',this)">All</button>
+      <button class="tab-btn" onclick="setTab('Groups',this)">Groups</button>
+      <button class="tab-btn" onclick="setTab('DMs',this)">DMs</button>
+    </div>
+    <div class="chat-list" id="chatList"></div>
+  </div>
+
+  <!-- ══ RIGHT PANEL ═════════════════════════════════════════ -->
+  <div class="right-panel">
+    <div class="placeholder" id="placeholder">
+      <div class="ph-icon">💬</div>
+      <h2>ChatNet</h2>
+      <p>Select a chat to start messaging</p>
+      <p style="font-size:11px;color:var(--ts);margin-top:6px">Powered by Python WebSocket Server</p>
+    </div>
+
+    <div class="chat-view" id="chatView" style="display:none">
+      <div class="call-bar" id="callBar"></div>
+      <div class="chat-header">
+        <div class="avatar" id="peerAvatar" style="background:var(--green)">?</div>
+        <div class="peer-info">
+          <div class="peer-name" id="peerName">Chat</div>
+          <div class="peer-status" id="peerStatus">● online</div>
+        </div>
+        <div style="display:flex;gap:2px;margin-left:auto">
+          <button class="icon-btn" onclick="startCall('video')">📹</button>
+          <button class="icon-btn" onclick="startCall('voice')">📞</button>
+          <button class="icon-btn" onclick="openSearch()">🔍</button>
+        </div>
+      </div>
+
+      <div class="messages-area" id="messagesArea"></div>
+      <div class="typing-bar" id="typingBar"></div>
+
+      <div class="reply-bar" id="replyBar">
+        <span style="color:var(--green);font-size:15px">↩</span>
+        <span class="rb-text" id="replyText"></span>
+        <button class="rb-close" onclick="clearReply()">✖</button>
+      </div>
+
+      <div class="reaction-bar">
+        <span class="rx-label">React:</span>
+        <button class="rx-btn" onclick="sendReaction('👍')">👍</button>
+        <button class="rx-btn" onclick="sendReaction('❤️')">❤️</button>
+        <button class="rx-btn" onclick="sendReaction('😂')">😂</button>
+        <button class="rx-btn" onclick="sendReaction('😮')">😮</button>
+        <button class="rx-btn" onclick="sendReaction('🔥')">🔥</button>
+        <button class="rx-btn" onclick="sendReaction('👏')">👏</button>
+        <button class="rx-btn" onclick="sendReaction('🎉')">🎉</button>
+        <button class="rx-btn" onclick="sendReaction('😢')">😢</button>
+      </div>
+
+      <div style="position:relative">
+        <!-- Attach menu -->
+        <div class="attach-menu" id="attachMenu">
+          <div class="attach-item" onclick="pickFile('image/*,video/*','image')"><div class="a-dot" style="background:#d946ef"></div><span style="font-size:15px">🖼</span><span class="a-label">Photos &amp; Videos</span></div>
+          <div class="attach-item" onclick="pickFile('.pdf,.docx,.doc,.xlsx,.xls,.txt,.pptx,.csv,.zip,.rar','other')"><div class="a-dot" style="background:#60a5fa"></div><span style="font-size:15px">📄</span><span class="a-label">Document</span></div>
+          <div class="attach-item" onclick="pickFile('audio/*','audio')"><div class="a-dot" style="background:#34d399"></div><span style="font-size:15px">🎵</span><span class="a-label">Audio</span></div>
+          <div class="attach-item" onclick="openCamera()"><div class="a-dot" style="background:#fb923c"></div><span style="font-size:15px">📷</span><span class="a-label">Camera</span></div>
+          <div class="attach-item" onclick="closeAttach();openModal('locationModal')"><div class="a-dot" style="background:#f87171"></div><span style="font-size:15px">📍</span><span class="a-label">Location</span></div>
+          <div class="attach-item" onclick="closeAttach();openModal('contactModal')"><div class="a-dot" style="background:#a78bfa"></div><span style="font-size:15px">👤</span><span class="a-label">Contact</span></div>
+          <div class="attach-item" onclick="openStickerModal()"><div class="a-dot" style="background:#fbbf24"></div><span style="font-size:15px">⭐</span><span class="a-label">Sticker</span></div>
+        </div>
+        <!-- Emoji picker -->
+        <div class="emoji-picker" id="emojiPicker"></div>
+        <!-- Input bar -->
+        <div class="input-bar">
+          <button class="icon-btn" data-emoji onclick="toggleEmoji()">😀</button>
+          <input id="msgInput" placeholder="Type a message" onkeydown="onMsgKey(event)" oninput="onMsgInput()">
+          <button class="icon-btn" data-attach onclick="toggleAttach()">📎</button>
+          <button class="send-btn" onclick="sendMessage()">➤</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODALS ══════════════════════════════════════════════════ -->
+
+<!-- LOGIN -->
+<div class="modal-overlay show" id="loginModal">
+  <div class="modal" style="max-width:380px;text-align:center">
+    <div style="font-size:40px;margin-bottom:6px">💬</div>
+    <h3 style="font-size:20px;color:var(--green);margin-bottom:10px">ChatNet</h3>
+    <div style="background:#0d2a1f;border-radius:8px;padding:10px 14px;margin-bottom:14px;text-align:left;font-size:12px;color:var(--ts)">
+      <div style="color:var(--green);font-weight:600;margin-bottom:4px">⚡ How to start</div>
+      <div>1. Run: <code style="background:var(--lp3);padding:1px 6px;border-radius:3px;color:var(--tw)">python server.py</code></div>
+      <div style="margin-top:3px">2. Open: <code style="background:var(--lp3);padding:1px 6px;border-radius:3px;color:var(--tw)">http://localhost:8080</code></div>
+      <div style="margin-top:3px;color:var(--yellow)">⚠ Do NOT open as file:// — use http://</div>
+    </div>
+    <div style="text-align:left">
+      <label>Your Name</label><input id="loginName" placeholder="e.g. Dharati"/>
+      <label>Password</label><input id="loginPass" type="password" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin('login')"/>
+      <label>Server Address</label><input id="loginHost" value="ws://127.0.0.1:9090"/>
+      <label>Room</label><input id="loginRoom" value="General"/>
+      <label>About (optional)</label><input id="loginAbout" value="Hey there! I am using ChatNet"/>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-top:14px">
+      <button class="btn-primary btn-full" onclick="doLogin('login')">LOGIN</button>
+      <button class="btn-full" onclick="doLogin('register')" style="background:var(--lp3);color:var(--tw)">NEW ACCOUNT (first time)</button>
+    </div>
+    <p id="loginErr" style="font-size:12px;margin-top:8px;line-height:1.6;min-height:18px"></p>
+  </div>
+</div>
+
+<!-- GROUP -->
+<div class="modal-overlay" id="groupModal">
+  <div class="modal">
+    <h3>👥 New Group</h3>
+    <label>Group Name</label><input id="groupName" placeholder="e.g. Office Team"/>
+    <label>Add Members</label>
+    <div class="member-list" id="memberList"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('groupModal')">Cancel</button>
+      <button class="btn-primary" onclick="createGroup()">Create Group</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOCATION -->
+<div class="modal-overlay" id="locationModal">
+  <div class="modal">
+    <h3>📍 Share Location</h3>
+    <label>Location Name</label><input id="locName" value="Pune, Maharashtra, India"/>
+    <label>Latitude</label><input id="locLat" value="18.5204"/>
+    <label>Longitude</label><input id="locLon" value="73.8567"/>
+    <div style="margin-top:10px;background:#1a3a2a;border-radius:8px;height:80px;display:flex;align-items:center;justify-content:center;font-size:34px">🗺</div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('locationModal')">Cancel</button>
+      <button class="btn-primary" onclick="sendLocation()">Share Location</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONTACT -->
+<div class="modal-overlay" id="contactModal">
+  <div class="modal">
+    <h3>👤 Share Contact</h3>
+    <label>Full Name</label><input id="conName" placeholder="e.g. Dharati Sharma"/>
+    <label>Phone</label><input id="conPhone" placeholder="+91 98765 43210"/>
+    <label>Email</label><input id="conEmail" placeholder="dharati@email.com"/>
+    <label>Company</label><input id="conCompany" placeholder="optional"/>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('contactModal')">Cancel</button>
+      <button class="btn-primary" onclick="sendContact()">Share Contact</button>
+    </div>
+  </div>
+</div>
+
+<!-- STICKER -->
+<div class="modal-overlay" id="stickerModal">
+  <div class="modal" style="max-width:400px">
+    <h3>⭐ Stickers</h3>
+    <div class="sticker-tabs" id="stickerTabs"></div>
+    <div class="sticker-grid" id="stickerGrid"></div>
+    <div class="modal-btns"><button class="btn-cancel" onclick="closeModal('stickerModal')">Close</button></div>
+  </div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div class="ctx-menu" id="ctxMenu">
+  <div class="ctx-item" onclick="ctxAction('reply')">↩ &nbsp;Reply</div>
+  <div class="ctx-item" onclick="ctxAction('forward')">↪ &nbsp;Forward</div>
+  <div class="ctx-item" onclick="ctxAction('copy')">📋 &nbsp;Copy</div>
+  <div class="ctx-item danger" onclick="ctxAction('delete')">🗑 &nbsp;Delete</div>
+</div>
+
+<input type="file" id="fileInput" style="display:none" onchange="onFilePicked(this)">
+
+<!-- ══ SCRIPTS ══════════════════════════════════════════════════ -->
+<script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/websocket.js"></script>
+<script src="js/bubbles.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
